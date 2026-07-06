@@ -5,7 +5,6 @@ import Button from '@/components/common/Button';
 
 interface NodeConfigPanelProps {
   node: Node;
-  nodes: Node[];
   onUpdateNode: (nodeId: string, data: Record<string, unknown>) => void;
   onDeleteNode: (nodeId: string) => void;
   onClose: () => void;
@@ -99,7 +98,7 @@ function getFieldsForType(nodeType: string): FieldDef[] {
   return nodeConfigs[nodeType] || [];
 }
 
-export default function NodeConfigPanel({ node, nodes, onUpdateNode, onDeleteNode, onClose }: NodeConfigPanelProps) {
+export default function NodeConfigPanel({ node, onUpdateNode, onDeleteNode, onClose }: NodeConfigPanelProps) {
   const nodeType = (node.data?.type as string) || 'unknown';
   const fields = getFieldsForType(nodeType);
   const existingConfig = (node.data?.config as Record<string, unknown>) || {};

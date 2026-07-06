@@ -98,8 +98,8 @@ export default function WorkflowEditorPage() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // Load workflow if editing
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function WorkflowEditorPage() {
         await workflows.update(created.id, {
           nodes: workflowNodes,
           edges: workflowEdges,
-          status: 'DRAFT',
+          status: 'draft',
         });
         navigate(`/app/workflows/${created.id}`, { replace: true });
       } else if (id) {
@@ -282,7 +282,7 @@ export default function WorkflowEditorPage() {
           name: workflowName,
           nodes: workflowNodes,
           edges: workflowEdges,
-          status: 'DRAFT',
+          status: 'draft',
         });
       }
     } catch (err) {
@@ -424,7 +424,6 @@ export default function WorkflowEditorPage() {
       {rightPanelOpen && selectedNode && (
         <NodeConfigPanel
           node={selectedNode}
-          nodes={nodes}
           onUpdateNode={handleUpdateNode}
           onDeleteNode={handleDeleteNode}
           onClose={() => { setRightPanelOpen(false); setSelectedNode(null); }}

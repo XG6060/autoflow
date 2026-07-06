@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { Workflow, Execution, DashboardStats, User, ApiKey } from '@/types';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';

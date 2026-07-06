@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Workflow,
   ArrowRight,
-  Shield,
   BarChart3,
   Check,
   ChevronRight,
   Menu,
   X,
-  Zap,
   Download,
   Eye,
   HeartPulse,

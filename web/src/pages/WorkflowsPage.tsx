@@ -32,16 +32,6 @@ export default function WorkflowsPage() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this workflow?')) return;
-    try {
-      await workflows.delete(id);
-      setWorkflowList((prev) => prev.filter((w) => w.id !== id));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Delete failed');
-    }
-  }
-
   const filtered = workflowList.filter((w) => {
     if (search && !w.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
