@@ -136,8 +136,8 @@ export async function updateWorkflow(
     data: {
       ...(input.name !== undefined && { name: input.name }),
       ...(input.description !== undefined && { description: input.description }),
-      ...(input.nodes !== undefined && { nodes: input.nodes }),
-      ...(input.edges !== undefined && { edges: input.edges }),
+      ...(input.nodes !== undefined && { nodes: input.nodes as any }),
+      ...(input.edges !== undefined && { edges: input.edges as any }),
       ...(input.status !== undefined && { status: input.status }),
     },
   });
@@ -183,7 +183,7 @@ export async function triggerWorkflow(userId: string, workflowId: string) {
       data: {
         status: 'SUCCESS',
         completedAt: new Date(),
-        steps: [],
+        steps: [] as any,
       },
     });
     return prisma.execution.findUnique({ where: { id: execution.id } });
@@ -212,7 +212,7 @@ export async function triggerWorkflow(userId: string, workflowId: string) {
           output: s.output,
           error: s.error,
           durationMs: s.durationMs,
-        })),
+        })) as any,
         errorMessage: engineResult.errorMessage,
       },
     });
