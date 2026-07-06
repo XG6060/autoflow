@@ -217,9 +217,9 @@ export default function WorkflowEditorPage() {
   const handleExport = () => {
     const workflowNodes = nodes.map((n) => ({
       id: n.id,
-      type: n.data?.type || 'unknown',
-      label: n.data?.label || 'Untitled',
-      config: n.data?.config || {},
+      type: (n.data as any)?.type || 'unknown',
+      label: (n.data as any)?.label || 'Untitled',
+      config: (n.data as any)?.config || {},
       position: n.position,
     }));
     const workflowEdges = edges.map((e) => ({
@@ -257,10 +257,10 @@ export default function WorkflowEditorPage() {
 
       const workflowNodes: WorkflowNode[] = nodes.map((n) => ({
         id: n.id,
-        type: n.data?.type || 'unknown',
-        label: n.data?.label || 'Untitled',
+        type: (n.data as any)?.type || 'unknown',
+        label: (n.data as any)?.label || 'Untitled',
         position: n.position,
-        config: {},
+        config: (n.data as any)?.config || {},
       }));
 
       const workflowEdges: WorkflowEdge[] = edges.map((e) => ({
