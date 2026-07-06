@@ -1,0 +1,32 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build web
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build server Docker image
+        run: docker build -t autoflow-server:${{ github.ref_name }} ./server
+
+      - name: Build engine
+        working-directory: engine
+        run: go build -o bin/runner ./cmd/runner
+
+      - name: Deploy (placeholder)
+        run: |
+          echo "Deploying AutoFlow ${{ github.ref_name }} to staging..."
+          echo "In production, this would push Docker images and deploy via SSH/K8s."

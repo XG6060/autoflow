@@ -1,0 +1,31 @@
+{
+  "id": "demo-001",
+  "name": "Demo Order Flow",
+  "nodes": [
+    {
+      "id": "webhook-1",
+      "type": "webhook",
+      "label": "Receive Order",
+      "config": {},
+      "position": { "x": 250, "y": 50 }
+    },
+    {
+      "id": "filter-1",
+      "type": "filter",
+      "label": "Check Amount > 100",
+      "config": { "field": "amount", "operator": "greater_than", "value": 100 },
+      "position": { "x": 250, "y": 200 }
+    },
+    {
+      "id": "slack-1",
+      "type": "slack_message",
+      "label": "Notify Team",
+      "config": { "channel": "#orders" },
+      "position": { "x": 250, "y": 350 }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "webhook-1", "target": "filter-1" },
+    { "id": "e2", "source": "filter-1", "target": "slack-1" }
+  ]
+}

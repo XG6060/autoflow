@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-50 text-surface-800 font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-200 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-300;
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-500;
+  }
+}
+
+@layer components {
+  /* ReactFlow connection line styling */
+  .react-flow__connection-line {
+    @apply stroke-primary-500;
+  }
+
+  .react-flow__edge.selected .react-flow__edge-path {
+    @apply stroke-primary-700;
+  }
+
+}
+
+/* ReactFlow cursor: override inline styles (Windows grab cursor is white/invisible) */
+.react-flow__pane {
+  cursor: default !important;
+}
+.react-flow__pane:active {
+  cursor: move !important;
+}
+.react-flow__node {
+  cursor: default !important;
+}
+/* Connection line dragging */
+.react-flow .react-flow__connection-line {
+  cursor: crosshair !important;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border-b border-surface-200;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
