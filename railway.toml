@@ -1,0 +1,9 @@
+[build]
+dockerfilePath = "server/Dockerfile"
+
+[service]
+port = 3001
+
+[deploy]
+numReplicas = 1
+restartPolicyType = "ON_FAILURE"
