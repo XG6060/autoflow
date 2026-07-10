@@ -1,20 +1,26 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search, MoreHorizontal, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Plus, Search, MoreHorizontal, AlertCircle, Upload, Sparkles, X } from 'lucide-react';
 import Button from '@/components/common/Button';
 import Badge from '@/components/common/Badge';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { workflows } from '@/lib/api';
-import type { Workflow } from '@/types';
+import { templates, templateCategories } from '@/lib/templates';
+import type { Workflow, WorkflowNode, WorkflowEdge } from '@/types';
 
 type FilterType = 'all' | 'active' | 'draft' | 'error';
 
 export default function WorkflowsPage() {
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
   const [workflowList, setWorkflowList] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showTemplates, setShowTemplates] = useState(tabParam === 'templates');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadWorkflows();
@@ -32,6 +38,34 @@ export default function WorkflowsPage() {
     }
   }
 
+  async function handleImportTemplate(nodes: WorkflowNode[], edges: WorkflowEdge[], templateName: string) {
+    try {
+      const created = await workflows.create({ name: templateName });
+      await workflows.update(created.id, { nodes, edges } as any);
+      setShowTemplates(false);
+      loadWorkflows();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Import failed');
+    }
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImporting(true);
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if (!data.nodes || !data.edges) throw new Error('Invalid workflow file');
+      await handleImportTemplate(data.nodes, data.edges, data.name || 'Imported Workflow');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Invalid JSON file');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }
+
   const filtered = workflowList.filter((w) => {
     if (search && !w.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -45,13 +79,101 @@ export default function WorkflowsPage() {
           <h2 className="text-2xl font-bold text-surface-900">Workflows</h2>
           <p className="text-sm text-surface-500">Manage and monitor your automations</p>
         </div>
-        <Link to="/app/workflows/new">
-          <Button>
-            <Plus className="h-4 w-4" />
-            Create Workflow
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            loading={importing}
+          >
+            <Upload className="h-4 w-4" />
+            Import
           </Button>
-        </Link>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowTemplates(true)}
+          >
+            <Sparkles className="h-4 w-4" />
+            Templates
+          </Button>
+          <Link to="/app/workflows/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              Create Workflow
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Template modal */}
+      {showTemplates && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-3xl rounded-2xl border border-surface-200 bg-white shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-surface-100 px-6 py-4">
+              <h3 className="text-lg font-semibold text-surface-900">Templates</h3>
+              <button
+                onClick={() => setShowTemplates(false)}
+                className="rounded-lg p-1.5 text-surface-400 hover:bg-surface-100 hover:text-surface-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => handleImportTemplate(tpl.nodes, tpl.edges, tpl.name)}
+                    className="flex flex-col rounded-xl border border-surface-200 p-5 text-left transition-all hover:border-primary-300 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-md bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-500">
+                        {tpl.category}
+                      </span>
+                    </div>
+                    <h4 className="mt-2 text-sm font-semibold text-surface-900">{tpl.name}</h4>
+                    <p className="mt-1 text-xs text-surface-500 line-clamp-2">{tpl.description}</p>
+                    <div className="mt-3 flex items-center justify-center rounded-lg bg-surface-50 py-3">
+                      <svg viewBox="0 0 200 30" className="h-8 w-full" aria-hidden="true">
+                        {tpl.nodes.slice(0, 4).map((_n, i) => (
+                          <g key={i}>
+                            <circle cx={30 + i * 50} cy="15" r="6" fill="none" stroke="#c7d2fe" strokeWidth="1.5" />
+                            <circle cx={30 + i * 50} cy="15" r="2.5" fill="#6366f1" />
+                          </g>
+                        ))}
+                        {tpl.edges.slice(0, 3).map((e, i) => {
+                          const si = tpl.nodes.findIndex((n) => n.id === e.source);
+                          const ti = tpl.nodes.findIndex((n) => n.id === e.target);
+                          if (si < 0 || ti < 0) return null;
+                          return (
+                            <line
+                              key={i}
+                              x1={30 + Math.min(si, ti) * 50 + 6}
+                              y1="15"
+                              x2={30 + Math.max(si, ti) * 50 - 6}
+                              y2="15"
+                              stroke="#c7d2fe"
+                              strokeWidth="1"
+                            />
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -83,7 +205,6 @@ export default function WorkflowsPage() {
         </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
           <AlertCircle className="h-5 w-5 text-rose-500" />
@@ -92,7 +213,6 @@ export default function WorkflowsPage() {
         </div>
       )}
 
-      {/* Loading */}
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -106,8 +226,7 @@ export default function WorkflowsPage() {
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && !error && filtered.length === 0 && workflowList.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-surface-300 py-20">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-100">
             <svg viewBox="0 0 64 64" fill="none" className="h-8 w-8" aria-hidden="true">
@@ -118,24 +237,30 @@ export default function WorkflowsPage() {
               <line x1="22" y1="32" x2="42" y2="42" stroke="#6366f1" strokeWidth="2" />
             </svg>
           </div>
-          <h3 className="mt-4 text-lg font-semibold text-surface-900">
-            {search ? 'No matching workflows' : 'Create your first workflow'}
-          </h3>
-          <p className="mt-1 text-sm text-surface-500">
-            {search ? 'Try a different search term' : 'Build an automation in minutes with our visual editor'}
-          </p>
-          {!search && (
-            <Link to="/app/workflows/new" className="mt-6">
-              <Button>
+          <h3 className="mt-4 text-lg font-semibold text-surface-900">No workflows yet</h3>
+          <p className="mt-1 text-sm text-surface-500">Start from a template, import a file, or build from scratch</p>
+          <div className="mt-6 flex gap-3">
+            <Button onClick={() => setShowTemplates(true)}>
+              <Sparkles className="h-4 w-4" />
+              Browse Templates
+            </Button>
+            <Link to="/app/workflows/new">
+              <Button variant="secondary">
                 <Plus className="h-4 w-4" />
-                Create Workflow
+                Start from Scratch
               </Button>
             </Link>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Grid */}
+      {!loading && !error && filtered.length === 0 && workflowList.length > 0 && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Search className="h-12 w-12 text-surface-300" />
+          <p className="mt-4 text-surface-600">No workflows match &quot;{search}&quot;</p>
+        </div>
+      )}
+
       {!loading && filtered.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((workflow) => (
@@ -156,17 +281,12 @@ export default function WorkflowsPage() {
                 <button
                   type="button"
                   className="ml-2 rounded p-1 text-surface-300 opacity-0 transition-opacity hover:bg-surface-100 hover:text-surface-600 group-hover:opacity-100"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   title="More actions"
                 >
                   <MoreHorizontal className="h-4 w-4" />
                 </button>
               </div>
-
-              {/* Mini node preview */}
               <div className="mt-4 flex items-center justify-center rounded-lg bg-surface-50 py-4">
                 <svg viewBox="0 0 200 40" className="h-10 w-full" aria-hidden="true">
                   {[30, 70, 110, 150].map((cx, i) => (
@@ -180,7 +300,6 @@ export default function WorkflowsPage() {
                   <line x1="118" y1="20" x2="142" y2="20" stroke="#c7d2fe" strokeWidth="1.5" />
                 </svg>
               </div>
-
               <div className="mt-4 flex items-center justify-between">
                 <Badge
                   variant={

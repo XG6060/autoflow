@@ -22,6 +22,7 @@ import Badge from '@/components/common/Badge';
 import AutoFlowNode from '@/components/workflow/AutoFlowNode';
 import NodeConfigPanel from '@/components/workflow/NodeConfigPanel';
 import { cn } from '@/lib/utils';
+import { humanizeError } from '@/lib/errors';
 import { workflows } from '@/lib/api';
 import type { WorkflowNode, WorkflowEdge } from '@/types';
 
@@ -178,6 +179,66 @@ export default function WorkflowEditorPage() {
     },
     [setNodes, setEdges]
   );
+
+  const handleDuplicateNode = useCallback(
+    (nodeId: string) => {
+      setNodes((nds) => {
+        const source = nds.find((n) => n.id === nodeId);
+        if (!source) return nds;
+        const newNode: Node = {
+          ...source,
+          id: `${source.data?.type || 'copy'}-${Date.now()}`,
+          position: { x: source.position.x + 50, y: source.position.y + 50 },
+          data: { ...source.data, label: `${source.data?.label || 'Node'} (copy)` },
+        };
+        return [...nds, newNode];
+      });
+    },
+    [setNodes]
+  );
+
+  // --- Right-click context menu ---
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string } | null>(null);
+
+  const onNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault();
+      setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
+    },
+    []
+  );
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  // --- Keyboard shortcuts ---
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Ignore when typing in inputs
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA' || (e.target as HTMLElement).tagName === 'SELECT') return;
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedNode) {
+          e.preventDefault();
+          handleDeleteNode(selectedNode.id);
+          setSelectedNode(null);
+          setRightPanelOpen(false);
+        }
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+
+      if (e.key === 'Escape') {
+        setContextMenu(null);
+        setSelectedNode(null);
+        setRightPanelOpen(false);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNode, nodes, edges, workflowName]);
 
   /** Check if the current graph has a cycle (prevents engine errors before saving). */
   function hasCycle(): boolean {
@@ -370,7 +431,7 @@ export default function WorkflowEditorPage() {
             {error && (
               <div className="flex items-center gap-1 text-xs text-rose-600">
                 <AlertCircle className="h-3 w-3" />
-                {error}
+                {humanizeError(error)}
               </div>
             )}
             <Button variant="secondary" size="sm" onClick={handleSave} loading={saving}>
@@ -396,6 +457,7 @@ export default function WorkflowEditorPage() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onNodeClick={onNodeClick}
+            onNodeContextMenu={onNodeContextMenu}
             onConnect={onConnect}
             onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
@@ -428,6 +490,29 @@ export default function WorkflowEditorPage() {
           onDeleteNode={handleDeleteNode}
           onClose={() => { setRightPanelOpen(false); setSelectedNode(null); }}
         />
+      )}
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={closeContextMenu} onContextMenu={(e) => { e.preventDefault(); closeContextMenu(); }} />
+          <div
+            className="fixed z-50 w-44 overflow-hidden rounded-xl border border-surface-200 bg-white shadow-lg py-1"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-surface-700 hover:bg-surface-100 transition-colors"
+              onClick={() => { handleDuplicateNode(contextMenu.nodeId); closeContextMenu(); }}
+            >
+              Duplicate
+            </button>
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+              onClick={() => { handleDeleteNode(contextMenu.nodeId); setSelectedNode(null); setRightPanelOpen(false); closeContextMenu(); }}
+            >
+              Delete
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

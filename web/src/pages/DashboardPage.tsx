@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Workflow as WorkflowIcon,
   CheckCircle2,
   AlertCircle,
   Clock,
   BarChart3,
+  ArrowRight,
+  FileText,
+  MessageSquare,
+  CreditCard,
+  Table2,
+  Building2,
 } from 'lucide-react';
 import Card from '@/components/common/Card';
 import Badge from '@/components/common/Badge';
@@ -13,6 +20,14 @@ import { DashboardSkeleton } from '@/components/common/Skeleton';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { executions } from '@/lib/api';
 import type { DashboardStats, Execution } from '@/types';
+
+const quickStartGuides = [
+  { icon: MessageSquare, title: 'Slack order notifications', desc: 'Send a Slack message when a new order arrives', step: 1 },
+  { icon: CreditCard, title: 'Payment alerts', desc: 'Alert your team when a Stripe payment succeeds', step: 2 },
+  { icon: Table2, title: 'Daily data backup', desc: 'Auto-save API data to Google Sheets every night', step: 3 },
+  { icon: Building2, title: 'Lead capture CRM', desc: 'Capture form leads and auto-create HubSpot contacts', step: 4 },
+  { icon: FileText, title: 'Form to Notion', desc: 'Log form submissions directly into a Notion database', step: 5 },
+];
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -91,6 +106,59 @@ export default function DashboardPage() {
       {/* Recent executions */}
       <Card padding="none">
         <div className="flex items-center justify-between border-b border-surface-100 px-5 py-4">
+      {/* Onboarding for new users */}
+      {stats.totalWorkflows === 0 && (
+        <Card padding="lg">
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50">
+              <svg viewBox="0 0 64 64" fill="none" className="h-8 w-8" aria-hidden="true">
+                <circle cx="16" cy="32" r="6" stroke="#6366f1" strokeWidth="2.5" />
+                <circle cx="48" cy="20" r="6" stroke="#818cf8" strokeWidth="2.5" />
+                <circle cx="48" cy="44" r="6" stroke="#818cf8" strokeWidth="2.5" />
+                <line x1="22" y1="32" x2="42" y2="22" stroke="#6366f1" strokeWidth="2" />
+                <line x1="22" y1="32" x2="42" y2="42" stroke="#6366f1" strokeWidth="2" />
+              </svg>
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-surface-900">Welcome to AutoFlow</h2>
+            <p className="mt-2 text-surface-500 max-w-md mx-auto">
+              Build your first workflow in minutes. Here is what you can automate:
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {quickStartGuides.map((item) => (
+              <div
+                key={item.step}
+                className="flex items-start gap-3 rounded-lg border border-surface-200 p-4 hover:border-primary-200 hover:shadow-sm transition-all cursor-pointer"
+                onClick={() => window.location.href = '/app/workflows?from=dashboard'}
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-50">
+                  <item.icon className="h-5 w-5 text-primary-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-surface-800">{item.title}</p>
+                  <p className="text-xs text-surface-400 mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-center gap-3">
+            <Link to="/app/workflows/new">
+              <Button>
+                Create Your First Workflow
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/app/workflows?tab=templates">
+              <Button variant="secondary">
+                Start from a Template
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
+
           <h3 className="text-sm font-semibold text-surface-900">Recent Executions</h3>
           <Button variant="ghost" size="sm" onClick={() => window.location.href = '/app/executions'}>
             View all

@@ -4,6 +4,7 @@ import Badge from '@/components/common/Badge';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import { cn, formatDateTime, formatDuration } from '@/lib/utils';
+import { humanizeError } from '@/lib/errors';
 import { executions } from '@/lib/api';
 import type { Execution } from '@/types';
 
@@ -142,7 +143,7 @@ export default function ExecutionsPage() {
                     {exec.errorMessage && (
                       <div className="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3">
                         <p className="text-sm font-medium text-rose-700">Error</p>
-                        <p className="mt-1 text-sm text-rose-600">{exec.errorMessage}</p>
+                        <p className="mt-1 text-sm text-rose-600">{humanizeError(exec.errorMessage)}</p>
                       </div>
                     )}
                     <div className="space-y-2">
