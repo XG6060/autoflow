@@ -5,7 +5,7 @@ import Button from '@/components/common/Button';
 import Badge from '@/components/common/Badge';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { workflows } from '@/lib/api';
-import { templates, templateCategories } from '@/lib/templates';
+import { templates } from '@/lib/templates';
 import type { Workflow, WorkflowNode, WorkflowEdge } from '@/types';
 
 type FilterType = 'all' | 'active' | 'draft' | 'error';
